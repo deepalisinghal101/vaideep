@@ -47,17 +47,17 @@ variable "bastion_instance_type" {
 
 variable "jenkins_instance_type" {
   type    = string
-  default = "t3.micro"
+  default = "t3.small"
 }
 
 variable "kafka_instance_type" {
   type    = string
-  default = "t3.micro"
+  default = "t3.small"
 }
 
 variable "kafka_ui_instance_type" {
   type    = string
-  default = "t3.micro"
+  default = "t3.small"
 }
 
 variable "ssh_key_name" {
