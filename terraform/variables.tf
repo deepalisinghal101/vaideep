@@ -47,12 +47,12 @@ variable "bastion_instance_type" {
 
 variable "jenkins_instance_type" {
   type    = string
-  default = "t3.medium"
+  default = "t3.micro"
 }
 
 variable "kafka_instance_type" {
   type    = string
-  default = "t3.medium"
+  default = "t3.micro"
 }
 
 variable "kafka_ui_instance_type" {
