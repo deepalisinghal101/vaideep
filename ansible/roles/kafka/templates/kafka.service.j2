@@ -1,0 +1,18 @@
+[Unit]
+Description=Apache Kafka (KRaft mode)
+Documentation=https://kafka.apache.org/documentation/
+After=network.target
+
+[Service]
+Type=simple
+User=kafka
+Group=kafka
+Environment="KAFKA_HEAP_OPTS=-Xms384m -Xmx384m"
+ExecStart={{ kafka_install_dir }}/bin/kafka-server-start.sh {{ kafka_config_dir }}/server.properties
+ExecStop={{ kafka_install_dir }}/bin/kafka-server-stop.sh
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=100000
+
+[Install]
+WantedBy=multi-user.target
