@@ -1,0 +1,123 @@
+---
+# ---------------------------------------------------------------
+# Kafka (KRaft mode, no Zookeeper) — runs on hosts in kafka_brokers
+# Expects group_vars/all.yml: kafka_version, scala_version,
+# kafka_tarball_url, kafka_install_dir, kafka_config_dir,
+# kafka_data_dir, kafka_cluster_id
+# Expects host var: broker_id (set in the generated inventory.tpl)
+# ---------------------------------------------------------------
+
+- name: Create kafka system group
+  group:
+    name: kafka
+    state: present
+
+- name: Create kafka system user
+  user:
+    name: kafka
+    group: kafka
+    system: yes
+    shell: /usr/sbin/nologin
+    create_home: no
+
+- name: Discover the attached data volume device (xvdf or nvme-renamed)
+  shell: |
+    if [ -b /dev/xvdf ]; then echo /dev/xvdf;
+    elif [ -b /dev/nvme1n1 ]; then echo /dev/nvme1n1;
+    else echo ""; fi
+  register: kafka_data_device
+  changed_when: false
+
+- name: Fail if the Kafka data EBS volume was not found
+  fail:
+    msg: "Could not find the attached Kafka data volume (checked /dev/xvdf and /dev/nvme1n1)"
+  when: kafka_data_device.stdout | length == 0
+
+- name: Format the data volume as ext4 (only if not already formatted)
+  filesystem:
+    fstype: ext4
+    dev: "{{ kafka_data_device.stdout }}"
+
+- name: Create Kafka data directory
+  file:
+    path: "{{ kafka_data_dir }}"
+    state: directory
+    owner: kafka
+    group: kafka
+    mode: "0755"
+
+- name: Mount the data volume at kafka_data_dir
+  mount:
+    path: "{{ kafka_data_dir }}"
+    src: "{{ kafka_data_device.stdout }}"
+    fstype: ext4
+    state: mounted
+
+- name: Download Kafka tarball
+  get_url:
+    url: "{{ kafka_tarball_url }}"
+    dest: "/tmp/kafka_{{ scala_version }}-{{ kafka_version }}.tgz"
+    mode: "0644"
+  register: kafka_download
+
+- name: Ensure install directory's parent exists
+  file:
+    path: "{{ kafka_install_dir | dirname }}"
+    state: directory
+
+- name: Extract Kafka tarball
+  unarchive:
+    src: "/tmp/kafka_{{ scala_version }}-{{ kafka_version }}.tgz"
+    dest: "/opt"
+    remote_src: yes
+    creates: "/opt/kafka_{{ scala_version }}-{{ kafka_version }}"
+
+- name: Symlink versioned Kafka dir to kafka_install_dir
+  file:
+    src: "/opt/kafka_{{ scala_version }}-{{ kafka_version }}"
+    dest: "{{ kafka_install_dir }}"
+    state: link
+
+- name: Own Kafka install directory
+  file:
+    path: "/opt/kafka_{{ scala_version }}-{{ kafka_version }}"
+    owner: kafka
+    group: kafka
+    recurse: yes
+
+- name: Render server.properties (KRaft combined broker+controller mode)
+  template:
+    src: server.properties.j2
+    dest: "{{ kafka_config_dir }}/server.properties"
+    owner: kafka
+    group: kafka
+    mode: "0644"
+  notify: restart kafka
+
+- name: Check whether Kafka storage has already been formatted
+  stat:
+    path: "{{ kafka_data_dir }}/meta.properties"
+  register: kafka_meta
+
+- name: Format Kafka storage directory for KRaft (first boot only)
+  command: >
+    {{ kafka_install_dir }}/bin/kafka-storage.sh format
+    -t {{ kafka_cluster_id }}
+    -c {{ kafka_config_dir }}/server.properties
+  become: yes
+  become_user: kafka
+  when: not kafka_meta.stat.exists
+
+- name: Install Kafka systemd unit
+  template:
+    src: kafka.service.j2
+    dest: /etc/systemd/system/kafka.service
+    mode: "0644"
+  notify: restart kafka
+
+- name: Enable and start Kafka service
+  systemd:
+    name: kafka
+    enabled: yes
+    state: started
+    daemon_reload: yes
