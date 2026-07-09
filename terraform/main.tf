@@ -39,6 +39,7 @@ module "ec2" {
   bastion_instance_type  = var.bastion_instance_type
   jenkins_instance_type  = var.jenkins_instance_type
   kafka_instance_type    = var.kafka_instance_type
+  kafka_broker_count    = var.kafka_broker_count
   kafka_ui_instance_type = var.kafka_ui_instance_type
   ssh_key_name           = var.ssh_key_name
 }
