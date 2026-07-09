@@ -1,0 +1,18 @@
+---
+- name: Common setup on all nodes
+  hosts: kafka_brokers,kafka_ui
+  become: yes
+  roles:
+    - common
+
+- name: Install and configure Kafka KRaft on brokers
+  hosts: kafka_brokers
+  become: yes
+  roles:
+    - kafka
+
+- name: Install Kafka UI
+  hosts: kafka_ui
+  become: yes
+  roles:
+    - kafka_ui
