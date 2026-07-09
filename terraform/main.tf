@@ -27,19 +27,15 @@ module "iam" {
 module "ec2" {
   source = "./modules/ec2"
 
-  project_name           = var.project_name
-  environment            = var.environment
-  public_subnet_ids      = module.vpc.public_subnet_ids
-  private_subnet_ids     = module.vpc.private_subnet_ids
-  bastion_sg_id          = module.security_groups.bastion_sg_id
-  jenkins_sg_id          = module.security_groups.jenkins_sg_id
-  kafka_sg_id            = module.security_groups.kafka_sg_id
-  kafka_ui_sg_id         = module.security_groups.kafka_ui_sg_id
-  iam_instance_profile   = module.iam.ec2_instance_profile_name
-  bastion_instance_type  = var.bastion_instance_type
-  jenkins_instance_type  = var.jenkins_instance_type
-  kafka_instance_type    = var.kafka_instance_type
+  project_name          = var.project_name
+  environment           = var.environment
+  public_subnet_ids     = module.vpc.public_subnet_ids
+  private_subnet_ids    = module.vpc.private_subnet_ids
+  bastion_sg_id         = module.security_groups.bastion_sg_id
+  kafka_sg_id           = module.security_groups.kafka_sg_id
+  iam_instance_profile  = module.iam.ec2_instance_profile_name
+  bastion_instance_type = var.bastion_instance_type
+  kafka_instance_type   = var.kafka_instance_type
   kafka_broker_count    = var.kafka_broker_count
-  kafka_ui_instance_type = var.kafka_ui_instance_type
-  ssh_key_name           = var.ssh_key_name
+  ssh_key_name          = var.ssh_key_name
 }
