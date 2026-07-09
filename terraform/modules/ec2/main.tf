@@ -51,7 +51,7 @@ resource "aws_instance" "jenkins" {
 
 # ----- Kafka Brokers (3 nodes across private subnets) -----
 resource "aws_instance" "kafka" {
-  count                  = 3
+  count                  = var.kafka_broker_count
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.kafka_instance_type
   subnet_id              = var.private_subnet_ids[count.index]
@@ -75,7 +75,7 @@ resource "aws_instance" "kafka" {
 
 # ----- Persistent EBS volumes for Kafka data -----
 resource "aws_ebs_volume" "kafka_data" {
-  count             = 3
+  count             = var.kafka_broker_count
   availability_zone = aws_instance.kafka[count.index].availability_zone
   size              = 50
   type              = "gp3"
@@ -88,7 +88,7 @@ resource "aws_ebs_volume" "kafka_data" {
 }
 
 resource "aws_volume_attachment" "kafka_data_attach" {
-  count       = 3
+  count       = var.kafka_broker_count
   device_name = "/dev/xvdf"
   volume_id   = aws_ebs_volume.kafka_data[count.index].id
   instance_id = aws_instance.kafka[count.index].id
