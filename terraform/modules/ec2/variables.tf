@@ -12,3 +12,4 @@ variable "jenkins_instance_type" { type = string }
 variable "kafka_instance_type" { type = string }
 variable "kafka_ui_instance_type" { type = string }
 variable "ssh_key_name" { type = string }
+variable "kafka_broker_count" { type = number}
