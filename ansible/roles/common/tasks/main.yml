@@ -14,3 +14,45 @@
       - ca-certificates
       - openjdk-17-jdk
     state: present
+ # t3.micro only has 1 GB RAM, which is tight for OS + JVM (Kafka).
+# A swap file gives the kernel breathing room instead of OOM-killing
+# processes under memory pressure.
+- name: Check if swap file already exists
+  stat:
+    path: /swapfile
+  register: swap_file_check
+
+- name: Create 1G swap file
+  command: fallocate -l 1G /swapfile
+  when: not swap_file_check.stat.exists
+
+- name: Set swap file permissions
+  file:
+    path: /swapfile
+    owner: root
+    group: root
+    mode: "0600"
+  when: not swap_file_check.stat.exists
+
+- name: Format swap file
+  command: mkswap /swapfile
+  when: not swap_file_check.stat.exists
+
+- name: Enable swap file
+  command: swapon /swapfile
+  when: not swap_file_check.stat.exists
+
+- name: Add swap file to /etc/fstab
+  mount:
+    path: none
+    src: /swapfile
+    fstype: swap
+    opts: sw
+    state: present
+
+- name: Set swappiness to reduce aggressive swapping
+  sysctl:
+    name: vm.swappiness
+    value: "10"
+    state: present
+    reload: yes   
