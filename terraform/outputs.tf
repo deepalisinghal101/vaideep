@@ -8,19 +8,9 @@ output "bastion_public_ip" {
   value       = module.ec2.bastion_public_ip
 }
 
-output "jenkins_public_ip" {
-  description = "Jenkins server public IP"
-  value       = module.ec2.jenkins_public_ip
-}
-
 output "kafka_broker_private_ips" {
   description = "Kafka brokers private IPs"
   value       = module.ec2.kafka_private_ips
-}
-
-output "kafka_ui_public_ip" {
-  description = "Kafka UI public IP"
-  value       = module.ec2.kafka_ui_public_ip
 }
 
 output "ansible_inventory_path" {
