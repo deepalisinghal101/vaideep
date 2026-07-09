@@ -1,8 +1,0 @@
----
-# SSH via Bastion ProxyJump for private-subnet Kafka brokers
-ansible_ssh_common_args: >-
-  -o ProxyCommand="ssh -i /var/lib/jenkins/.ssh/kafka-key.pem
-  -o StrictHostKeyChecking=no
-  -W %h:%p -q
-  ubuntu@{{ hostvars['bastion']['ansible_host'] }}"
-  -o StrictHostKeyChecking=no
