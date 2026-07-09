@@ -45,19 +45,9 @@ variable "bastion_instance_type" {
   default = "t3.micro"
 }
 
-variable "jenkins_instance_type" {
-  type    = string
-  default = "t3.small"
-}
-
 variable "kafka_instance_type" {
   type    = string
-  default = "t3.small"
-}
-
-variable "kafka_ui_instance_type" {
-  type    = string
-  default = "t3.small"
+  default = "t3.micro"
 }
 
 variable "kafka_broker_count" {
