@@ -60,6 +60,11 @@ variable "kafka_ui_instance_type" {
   default = "t3.small"
 }
 
+variable "kafka_broker_count" {
+  type    = number
+  default = 1
+}
+
 variable "ssh_key_name" {
   description = "EC2 Key Pair name"
   type        = string
