@@ -12,7 +12,7 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # Canonical
 }
 
-# ----- Bastion Host -----
+# ----- Bastion Host (jump box for SSH/Ansible into private subnet) -----
 resource "aws_instance" "bastion" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.bastion_instance_type
@@ -27,29 +27,7 @@ resource "aws_instance" "bastion" {
   }
 }
 
-# ----- Jenkins Server -----
-resource "aws_instance" "jenkins" {
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = var.jenkins_instance_type
-  subnet_id              = var.public_subnet_ids[0]
-  vpc_security_group_ids = [var.jenkins_sg_id]
-  key_name               = var.ssh_key_name
-  iam_instance_profile   = var.iam_instance_profile
-
-  root_block_device {
-    volume_size           = 30
-    volume_type           = "gp3"
-    encrypted             = true
-    delete_on_termination = true
-  }
-
-  tags = {
-    Name        = "${var.project_name}-jenkins"
-    Environment = var.environment
-  }
-}
-
-# ----- Kafka Brokers (3 nodes across private subnets) -----
+# ----- Kafka Brokers -----
 resource "aws_instance" "kafka" {
   count                  = var.kafka_broker_count
   ami                    = data.aws_ami.ubuntu.id
@@ -94,38 +72,18 @@ resource "aws_volume_attachment" "kafka_data_attach" {
   instance_id = aws_instance.kafka[count.index].id
 }
 
-# ----- Kafka UI -----
-resource "aws_instance" "kafka_ui" {
-  ami                    = data.aws_ami.ubuntu.id
-  instance_type          = var.kafka_ui_instance_type
-  subnet_id              = var.public_subnet_ids[1]
-  vpc_security_group_ids = [var.kafka_ui_sg_id]
-  key_name               = var.ssh_key_name
-  iam_instance_profile   = var.iam_instance_profile
-
-  tags = {
-    Name        = "${var.project_name}-kafka-ui"
-    Environment = var.environment
-  }
-}
-
 # ----- AUTO-GENERATE Ansible Inventory after all EC2 instances are launched -----
 resource "local_file" "ansible_inventory" {
   content = templatefile("${path.module}/templates/inventory.tpl", {
-    bastion_ip  = aws_instance.bastion.public_ip
-    jenkins_ip  = aws_instance.jenkins.public_ip
-    kafka_ips   = aws_instance.kafka[*].private_ip
-    kafka_ui_ip = aws_instance.kafka_ui.public_ip
+    bastion_ip = aws_instance.bastion.public_ip
+    kafka_ips  = aws_instance.kafka[*].private_ip
   })
 
-  # Path is relative to repo root: ansible/inventory/hosts.yml
   filename        = "${path.root}/../ansible/inventory/hosts.yml"
   file_permission = "0644"
 
   depends_on = [
     aws_instance.bastion,
-    aws_instance.jenkins,
     aws_instance.kafka,
-    aws_instance.kafka_ui,
   ]
 }
