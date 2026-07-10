@@ -2,11 +2,13 @@
 - name: Common setup on all nodes
   hosts: kafka_brokers
   become: yes
+  gather_facts: no
   roles:
     - common
 
 - name: Install and configure Kafka KRaft on brokers
   hosts: kafka_brokers
   become: yes
+  gather_facts: no
   roles:
     - kafka
