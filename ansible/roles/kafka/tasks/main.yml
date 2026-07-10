@@ -45,6 +45,16 @@
     fstype: ext4
     state: mounted
 
+
+- name: Re-apply ownership after mount (mount resets it to root)
+  file:
+    path: "{{ kafka_data_dir }}"
+    state: directory
+    owner: kafka
+    group: kafka
+    mode: "0755"
+    recurse: yes    
+
 - name: Download Kafka tarball
   get_url:
     url: "{{ kafka_tarball_url }}"
