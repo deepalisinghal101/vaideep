@@ -54,6 +54,7 @@ pipeline {
         TF_INPUT              = 'false'
         ANSIBLE_HOST_KEY_CHECKING = 'False'
         ANSIBLE_DIR           = 'ansible'
+        SLACK_CHANNEL      = '#deployments'
     }
 
     stages {
@@ -222,11 +223,13 @@ pipeline {
             }
             steps {
                 dir(ANSIBLE_DIR) {
-                    sshagent(credentials: ['kafka-ssh-key']) {
-                        sh """
-                            ansible-playbook -i inventory/hosts.yml playbooks/site.yml \
-                                --extra-vars "bastion_ip=${env.BASTION_IP}"
-                        """
+                    timeout(time: 30, unit: 'MINUTES') {
+                        sshagent(credentials: ['kafka-ssh-key']) {
+                            sh """
+                                ansible-playbook -vv -i inventory/hosts.yml playbooks/site.yml \
+                                    --extra-vars "bastion_ip=${env.BASTION_IP}"
+                            """
+                        }
                     }
                 }
             }
@@ -241,9 +244,17 @@ pipeline {
         }
         success {
             echo "Terraform ${params.ACTION} completed successfully."
+            slackSend channel: env.SLACK_CHANNEL,
+                      color: '#00FF00',
+                      message: "SUCCESSFUL: Job '${env.JOB_NAME}' [build #${env.BUILD_NUMBER}] completed successfully! (${env.BUILD_URL})" 
         }
         failure {
-            echo "Terraform ${params.ACTION} failed. Check the logs above."
-        }
+            echo "Terraform ${params.ACTION} failed. Check the logs above." 
+            slackSend channel: env.SLACK_CHANNEL,
+                      color: '#FF0000',
+                      message: "FAILED: Job '${env.JOB_NAME}' [build #${env.BUILD_NUMBER}] failed. Check logs! (${env.BUILD_URL})"
+        }    
+        
     }
+    
 }
