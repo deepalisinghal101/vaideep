@@ -1,5 +1,4 @@
-// Jenkinsfile — Terraform pipeline for aws-devops-kafka-infra-v2
-// Location of Terraform root module in this repo:
+
 def TF_DIR = 'terraform'
 
 pipeline {
@@ -46,7 +45,7 @@ pipeline {
     }
 
     environment {
-        // Jenkins credential IDs — create these under Manage Jenkins > Credentials first
+        
         AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
         AWS_DEFAULT_REGION    = "${params.AWS_REGION}"
@@ -76,6 +75,7 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 dir(TF_DIR) {
+                    // Added -input=false flag to prevent Jenkins pipeline from hanging on user input prompts.
                     sh 'terraform init -input=false'
                 }
             }
