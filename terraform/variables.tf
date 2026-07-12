@@ -58,5 +58,5 @@ variable "kafka_broker_count" {
 variable "ssh_key_name" {
   description = "EC2 Key Pair name"
   type        = string
-  default     = "abcd.pem"
+  default     = "abcd"
 }
